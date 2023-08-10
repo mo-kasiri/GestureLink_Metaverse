@@ -1,4 +1,5 @@
 import Peer from 'simple-peer/simplepeer.min.js';
+//import Peer from 'simple-peer'
 import LocalStreamService from "./LocalStreamService.jsx";
 
 
@@ -19,10 +20,6 @@ class SimplePeerServices{
             stream: await LocalStreamService.getStream({video: false, audio: true}), // set video to true if you want to submit video
             objectMode: true
         });
-    }
-
-    getLocalPeer(){
-        //return localPeer;
     }
 }
 

@@ -1,6 +1,7 @@
 // Components for render
 import './App.css'
-import {Canvas, useFrame} from '@react-three/fiber';
+import * as THREE from 'three';
+import {Canvas} from '@react-three/fiber';
 import {useEffect, useRef, useState} from "react";
 import { Perf } from "r3f-perf";
 import LoginForm from "./components/login-page/LoginForm.jsx";
@@ -13,20 +14,22 @@ import ChannelForm from "./components/login-page/ChannelForm.jsx";
 // Services
 import AgoraConnection from "./services/AgoraConnection.jsx";
 import LocalStream from "./components/computer-vision/LocalStream.jsx";
-import Peer2PeerChatForm from "./components/handling-messages/Peer2PeerChatForm.jsx";
+//import Peer2PeerChatForm from "./components/handling-messages/Peer2PeerChatForm.jsx";
 import CallModal from "./components/universal-components/CallModal.jsx";
 import SimplePeerServices from "./services/SimplePeerServices.jsx";
 import IncomingCallModal from "./components/universal-components/IncomingCallModal.jsx";
 import Environment from "./components/webGL/Environment.jsx";
-import Mediapipe2DHands from "./components/computer-vision/Mediapipe2DHands.jsx";
-import Mediapipe3DHands from "./components/computer-vision/Mediapipe3DHands.jsx";
-import Models from "./components/webGL/Models.jsx";
+// import Mediapipe2DHands from "./components/computer-vision/Mediapipe2DHands.jsx";
+// import Mediapipe3DHands from "./components/computer-vision/Mediapipe3DHands.jsx";
+// import Models from "./components/webGL/Models.jsx";
 import {PointerLockControls} from "@react-three/drei";
 import ModelsVrm from "./components/webGL/ModelsVrm";
 
 let channel;
 let localHandLandmarks = [null];
-let remoteHandLandmarks = {value: null};
+let remoteHandLandmarks = {value: false};
+let localCameraDirection = new THREE.Vector3();
+let remoteCameraDirection = new THREE.Vector3();
 
 function App() {
 
@@ -35,7 +38,7 @@ function App() {
   const [chatMessages, setChatMessages] = useState([]);
   const [isLoggedIn, setIslogedIn] = useState(false);
   const [isLoading, setIsLoading] = useState(false);
-  const [isJoined, setIsJoined] = useState(true);
+  const [isJoined, setIsJoined] = useState(false);
   const [localInfo, setLocalInfo] = useState({ID: 0, channel: '', peerID: 0});
   const [incommingCallInfo, setIncommingCallInfo] = useState({stat: false, localID:0, peerID: 0});
   const [callerSignal, setCallerSignal] = useState();
@@ -183,23 +186,30 @@ function App() {
     caller.on('connect', ()=>{
       console.log('the connect message has been sent2');
         setInterval(()=>{
-          if(localHandLandmarks[0] !== null){
-            caller.send(JSON.stringify(localHandLandmarks)); //<=======================================================  Sending Data call_a_user
+                                              //<======================================================= Sending Data Incoming call
+          if(localHandLandmarks[0] !== false){
+            caller.send(JSON.stringify({cameraDir: localCameraDirection,value:localHandLandmarks}));
           }else{
-            caller.send(JSON.stringify(null));
+            caller.send(JSON.stringify({cameraDir: localCameraDirection, value : false}));
           }
         },20);
     });
 
 
-    caller.on('data',data => {
+    caller.on('data',(data) => {
 
-        //console.log(JSON.parse(data)); // <**************************************************************************** Receiving Data incommingCall
-      if(JSON.parse(data) !== null)
-      {
-        remoteHandLandmarks.value = JSON.parse(data);
+      //console.log(JSON.parse(data));  // <**************************************************************************** Receiving Data incommingCall
+      if(JSON.parse(data).value !== false) {
+        remoteHandLandmarks.value = JSON.parse(data).value;
+        if(JSON.parse(data).cameraDir?.x){
+          remoteCameraDirection.copy(JSON.parse(data).cameraDir);
+        }
+
       }else{
-        remoteHandLandmarks.value = null;
+        remoteHandLandmarks.value = false;
+        if(JSON.parse(data).cameraDir?.x){
+          remoteCameraDirection.copy(JSON.parse(data).cameraDir);
+        }
       }
     });
 
@@ -250,12 +260,19 @@ function App() {
 
       localPeer.on('data',data => {
 
-        //console.log(JSON.parse(data)); // <**************************************************************************** Receiving Data incommingCall
-          if(JSON.parse(data) !== null)
+          //console.log(JSON.parse(data)); // <**************************************************************************** Receiving Data incomingCall
+          if(JSON.parse(data).value !== false)
           {
-            remoteHandLandmarks.value = JSON.parse(data);
+            remoteHandLandmarks.value = JSON.parse(data).value;
+            if(JSON.parse(data).cameraDir?.x){
+              remoteCameraDirection.copy(JSON.parse(data).cameraDir);
+            }
           }else{
-            remoteHandLandmarks.value = null;
+            remoteHandLandmarks.value = false;
+            if(JSON.parse(data).cameraDir?.x){
+              remoteCameraDirection.copy(JSON.parse(data).cameraDir);
+              //console.log(remoteCameraDirection);
+            }
           }
       });
 
@@ -263,11 +280,11 @@ function App() {
         console.log('the connect message has been sent2');
 
           setInterval(()=> {
-            if(localHandLandmarks[0] !== null){
-              //const simpleObject = {state: 1, length: true, name: 'mohammad'};
-              localPeer.send(JSON.stringify(localHandLandmarks)); //<======================================================= Sending Data Incomming call
+                                                  //<======================================================= Sending Data Incomming call
+            if(localHandLandmarks[0] !== false){
+              localPeer.send(JSON.stringify({cameraDir: localCameraDirection,value: localHandLandmarks}));
             }else{
-              localPeer.send(JSON.stringify(null));
+              localPeer.send(JSON.stringify({cameraDir: localCameraDirection, value : false}));
             }
           },20);
       });
@@ -280,14 +297,16 @@ function App() {
   }
 
   const handLandmarksPropHandle = (handLandmarks) =>{
-    //console.log(handLandmarks)
-    if(handLandmarks !== null){
-      localHandLandmarks = handLandmarks;
-      //console.log('handle message function', localHandLandmarks);
-    }else{
-      localHandLandmarks = [null];
-    }
 
+    if(handLandmarks !== false){
+      localHandLandmarks = handLandmarks;
+    }else{
+      localHandLandmarks = [false];
+    }
+  }
+
+  const handleCameraDirection  = (cameraDirection)=>{
+    localCameraDirection.copy(cameraDirection);
   }
 
   return (
@@ -316,13 +335,17 @@ function App() {
           width: '100%',
           height: '100%'
         }}>
-
-          ='
           <Environment/>
           <PointerLockControls selector="#PointerLockBtn"/>
           {/*<Models userJoined={userJoined2SocialVR} handLandmarksProp={handLandmarksPropHandle} remoteHandLandMarksProp={remoteHandLandmarks}/>*/}
-          <ModelsVrm userJoined={userJoined2SocialVR} handLandmarksProp={handLandmarksPropHandle} remoteHandLandMarksProp={remoteHandLandmarks}/>
-          {/*<Perf position='top-right' style={{top:80}}/>*/}
+          <ModelsVrm
+              userJoined={userJoined2SocialVR}
+              handLandmarksProp={handLandmarksPropHandle}
+              remoteHandLandMarksProp={remoteHandLandmarks}
+              cameraDirection={handleCameraDirection}
+              remoteCameraDirection={remoteCameraDirection}
+          />
+          <Perf position='top-right' style={{top:80}}/>
         </Canvas>}
 
         {isJoined &&

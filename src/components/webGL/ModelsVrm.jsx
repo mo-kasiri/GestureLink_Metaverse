@@ -15,7 +15,7 @@ import { VRM, VRMLoaderPlugin, VRMHumanBoneName } from '@pixiv/three-vrm'
 
 let handLandMarks;
 let modelLoaded = false;
-const ModelsVrm = ({userJoined,handLandmarksProp,remoteHandLandMarksProp})=>{
+const ModelsVrm = ({userJoined,handLandmarksProp,remoteHandLandMarksProp,cameraDirection, remoteCameraDirection})=>{
 
     const [gltf, setGltf] = useState();
     const avatar = useRef(null);
@@ -24,7 +24,8 @@ const ModelsVrm = ({userJoined,handLandmarksProp,remoteHandLandMarksProp})=>{
     //const armchairPosition = new THREE.Vector3(2.1151208877563477,0.312796471118927002,-0.3487975299358368);
     camera.position.set( -0.293, 1.1, -1.9 );
     camera.lookAt(-0.29,0.6,0.5);
-    camera.fov = 50;
+    camera.fov = 55;
+    let cameraVector = new THREE.Vector3();
     //camera.position.set( 0.4, 2, -0.6 );
 
     const loader = new GLTFLoader();
@@ -85,7 +86,7 @@ const ModelsVrm = ({userJoined,handLandmarksProp,remoteHandLandMarksProp})=>{
 
     const OOI = {};
 
-    const { scene } = useGLTF('./models/no-user.glb');
+    const { scene } = useGLTF('./models/no-user-color.glb');
     //const peerUser =
     console.log(scene);
 
@@ -193,14 +194,28 @@ const ModelsVrm = ({userJoined,handLandmarksProp,remoteHandLandMarksProp})=>{
         init();
     },[]);
 
+
+
+
+
     useFrame(({clock}, delta)=>{
+        //camera.getWorldPosition(CameraPosition);
+        //console.log(CameraPosition);
+
         const t = clock.getElapsedTime();
         if (localVideo.currentTime > 0 && modelLoaded)
         {
+            camera.getWorldDirection(cameraVector);
+            cameraDirection(cameraVector);
+
+
+            //console.log(remoteCameraDirection);
+
 
             // peer user animation => then check if user joined
             if(avatar.current){
                 avatar.current.update(delta);
+                //vrm.lookAt()
 
                 //avatar.current.expressionManager.setValue('aa', Math.sin((t / 2) * Math.PI));
 
@@ -213,8 +228,13 @@ const ModelsVrm = ({userJoined,handLandmarksProp,remoteHandLandMarksProp})=>{
                     bonesStore.spine.position.z = (Math.PI / 600) * Math.sin((t / 2) * Math.PI)
                 }
                 if(bonesStore.head){
-                    bonesStore.head.rotation.y = (Math.PI / 600) * 5 *Math.sin((t / 8) * Math.PI);
+                    //bonesStore.head.rotation.y = (Math.PI / 600) * 5 *Math.sin((t / 8) * Math.PI);
+                    bonesStore.head.rotation.y = remoteCameraDirection.x;
+                    bonesStore.head.rotation.x = remoteCameraDirection.y;
                 }
+                // if(bonesStore.neck){
+                //
+                // }
             }
 
 
@@ -229,43 +249,39 @@ const ModelsVrm = ({userJoined,handLandmarksProp,remoteHandLandMarksProp})=>{
                         CreatTwo3DHands(res[0].keypoints3D, res[1].keypoints3D, OOI, res[0].keypoints[0].x, res[0].keypoints[0].y,res[1].keypoints[0].x, res[1].keypoints[0].y);
                     }
                 }else{
-                    handLandmarksProp(null);
+                    handLandmarksProp(false);
                     CreatTwo3DHands(null,null,OOI,1,1,1, 1);
                 }
             });
 
-
-
             // Remote Hands
-            if(remoteHandLandMarksProp?.value !== null)
+            if(remoteHandLandMarksProp?.value !== false)
             {
                 //console.log('From Models', remoteHandLandMarksProp.value);
 
-                if(remoteHandLandMarksProp.value.length === 1)
+                if(remoteHandLandMarksProp.value?.length === 1)
                 {
                     CreateTwo3DRemoteHands(remoteHandLandMarksProp.value[0].keypoints3D, false, OOI, remoteHandLandMarksProp.value[0].keypoints[0].x, remoteHandLandMarksProp.value[0].keypoints[0].y,1, 1)
-                }else if(remoteHandLandMarksProp.value.length === 2){
+                }else if(remoteHandLandMarksProp.value?.length === 2){
                     CreateTwo3DRemoteHands(remoteHandLandMarksProp.value[0].keypoints3D, remoteHandLandMarksProp.value[1].keypoints3D, OOI, remoteHandLandMarksProp.value[0].keypoints[0].x, remoteHandLandMarksProp.value[0].keypoints[0].y,remoteHandLandMarksProp.value[1].keypoints[0].x, remoteHandLandMarksProp.value[1].keypoints[0].y);
                 }
             }else{
                 //console.log("no hand");
                 CreateTwo3DRemoteHands(null,null,OOI,1,1,1, 1);
             }
-
         }
-
     });
 
     // *******************************Hands
     return(
         <>
-            <primitive object={scene} scale={1} position={[0, 0, 0]} rotation={[0, 0, 0]} />
-                {/*<Html*/}
-                {/*    position={[-0.4, 1.3, 1]}*/}
-                {/*>*/}
-                {/*    <div className="annotation">Peer User</div>*/}
-                {/*</Html>*/}
-            {/*</primitive>*/}
+            <primitive object={scene} scale={1} position={[0, 0, 0]} rotation={[0, 0, 0]} >
+                <Html
+                    position={[-0.4, 1.3, 1]}
+                >
+                    <div className="annotation">Peer User</div>
+                </Html>
+            </primitive>
         </>
     )
 }
