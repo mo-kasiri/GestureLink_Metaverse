@@ -23,7 +23,7 @@ const ModelsVrm = ({userJoined,handLandmarksProp,remoteHandLandMarksProp,cameraD
     const camera = useThree((state) => state.camera);
     //const armchairPosition = new THREE.Vector3(2.1151208877563477,0.312796471118927002,-0.3487975299358368);
     camera.position.set( -0.293, 1.1, -1.9 );
-    camera.lookAt(-0.29,0.6,0.5);
+    camera.lookAt(-0.29,1,0.5);
     camera.fov = 55;
     let cameraVector = new THREE.Vector3();
     //camera.position.set( 0.4, 2, -0.6 );
@@ -36,62 +36,52 @@ const ModelsVrm = ({userJoined,handLandmarksProp,remoteHandLandMarksProp,cameraD
 
     // then add a function instead of useEffect -> when the peer user joined
     useEffect(() => {
-        loader.load(
-            '/models/kiraMan2.vrm',
-            //'/models/moManCompressed.vrm',
-            (gltf)=>{
-                //setGltf(gltf);
-                console.log(gltf);
-                scene.add(gltf.scene);
-                gltf.scene.scale.set(1.2,1.2,1.2);
-                vrm = gltf.userData.vrm;
-                avatar.current = vrm;
-                //const targetGaze = new THREE.Object3D();
-                //targetGaze.position.set(-0.293, 1.3, -1.9);
-                //vrm.lookAt.target = camera;
+
+        if(userJoined){
+            loader.load(
+                '/models/woman.temp.vrm',
+                //'/models/moManCompressed.vrm',
+                (gltf)=>{
+                    setGltf(gltf);
+                    console.log(gltf);
+                    scene.add(gltf.scene);
+                    gltf.scene.scale.set(1.2,1.2,1.2);
+                    vrm = gltf.userData.vrm;
+                    avatar.current = vrm;
 
 
-                //vrm.humanoid.getNormalizedBoneNode(VRMHumanBoneName.Hips).rotation.y = Math.PI
-                vrm.humanoid.getNormalizedBoneNode(VRMHumanBoneName.Hips).position.y = 0.4;
-                vrm.humanoid.getNormalizedBoneNode(VRMHumanBoneName.Hips).position.z = 0.5;
-                vrm.humanoid.getNormalizedBoneNode(VRMHumanBoneName.Hips).position.x = -0.26;
-                avatar.current.expressionManager.setValue('relaxed', 0.5);
-                //avatar.current.expressionManager.setValue('aa', 0.5);
-                // console.log(vrm.blendShapeProxy.exp  ressions)
-                // console.log(vrm.expressionManager.expressions)
-                const expressionNames = vrm.expressionManager.expressions.map((expression) => expression.expressionName)
-                console.log(expressionNames)
-                // VRMUtils.rotateVRM0(vrm)
+                    //vrm.humanoid.getNormalizedBoneNode(VRMHumanBoneName.Hips).rotation.y = Math.PI
+                    vrm.humanoid.getNormalizedBoneNode(VRMHumanBoneName.Hips).position.y = 0.4;
+                    vrm.humanoid.getNormalizedBoneNode(VRMHumanBoneName.Hips).position.z = 0.5;
+                    vrm.humanoid.getNormalizedBoneNode(VRMHumanBoneName.Hips).position.x = -0.26;
+                    avatar.current.expressionManager.setValue('relaxed', 0.5);
+                    //avatar.current.expressionManager.setValue('aa', 0.5);
+                    // console.log(vrm.blendShapeProxy.exp  ressions)
+                    // console.log(vrm.expressionManager.expressions)
+                    const expressionNames = vrm.expressionManager.expressions.map((expression) => expression.expressionName)
+                    console.log(expressionNames)
+                    // VRMUtils.rotateVRM0(vrm)
 
-                console.log(vrm.humanoid.getNormalizedBoneNode(VRMHumanBoneName.Head));
-                // Some object3d which defined as bones, just take a look at the previous line in the console
-                // When the loading is completed these bones are going to be stored inside boneStore state
-                const bones = {
-                    head: vrm.humanoid.getNormalizedBoneNode(VRMHumanBoneName.Head),
-                    neck: vrm.humanoid.getRawBoneNode(VRMHumanBoneName.Neck),
-                    hips: vrm.humanoid.getRawBoneNode(VRMHumanBoneName.Hips),
-                    spine: vrm.humanoid.getRawBoneNode(VRMHumanBoneName.Spine),
-                    upperChest: vrm.humanoid.getRawBoneNode(VRMHumanBoneName.UpperChest),
-                    //leftArm: vrm.humanoid.getNormalizedBoneNode(VRMHumanBoneName.LeftUpperArm),
-                    //rightArm: vrm.humanoid.getNormalizedBoneNode(VRMHumanBoneName.RightUpperArm)
+                    console.log(vrm.humanoid.getNormalizedBoneNode(VRMHumanBoneName.Head));
+                    // Some object3d which defined as bones, just take a look at the previous line in the console
+                    // When the loading is completed these bones are going to be stored inside boneStore state
+                    const bones = {
+                        head: vrm.humanoid.getNormalizedBoneNode(VRMHumanBoneName.Head),
+                        neck: vrm.humanoid.getRawBoneNode(VRMHumanBoneName.Neck),
+                        hips: vrm.humanoid.getRawBoneNode(VRMHumanBoneName.Hips),
+                        spine: vrm.humanoid.getRawBoneNode(VRMHumanBoneName.Spine),
+                        upperChest: vrm.humanoid.getRawBoneNode(VRMHumanBoneName.UpperChest),
+                    }
+
+                    setBones(bones);
                 }
-
-                //bones.rightArm.rotation.z = -Math.PI / 4
-
-                setBones(bones);
-            }
-        )
-    }, []);
+            )
+        }
+    }, [userJoined]);
 
 
     const OOI = {};
-
     const { scene } = useGLTF('./models/no-user-color.glb');
-    //const peerUser =
-    console.log(scene);
-
-
-
     scene.traverse(n => {
         if (n.name === 'palm1') OOI.palm1 = n;
         if (n.name === 'palm2') OOI.palm2 = n;
@@ -182,6 +172,7 @@ const ModelsVrm = ({userJoined,handLandmarksProp,remoteHandLandMarksProp,cameraD
         //if (n.name === 'armchair') OOI.armchair = n;
     });
 
+
     // *******************************Hands
     const localVideo = document.getElementById("user-1");
 
@@ -199,8 +190,6 @@ const ModelsVrm = ({userJoined,handLandmarksProp,remoteHandLandMarksProp,cameraD
 
 
     useFrame(({clock}, delta)=>{
-        //camera.getWorldPosition(CameraPosition);
-        //console.log(CameraPosition);
 
         const t = clock.getElapsedTime();
         if (localVideo.currentTime > 0 && modelLoaded)
@@ -209,34 +198,45 @@ const ModelsVrm = ({userJoined,handLandmarksProp,remoteHandLandMarksProp,cameraD
             cameraDirection(cameraVector);
 
 
-            //console.log(remoteCameraDirection);
+            if(userJoined){
 
+                if(avatar.current){
+                    avatar.current.update(delta);
 
-            // peer user animation => then check if user joined
-            if(avatar.current){
-                avatar.current.update(delta);
-                //vrm.lookAt()
+                    //avatar.current.expressionManager.setValue('aa', Math.sin((t / 2) * Math.PI));
 
-                //avatar.current.expressionManager.setValue('aa', Math.sin((t / 2) * Math.PI));
+                    if (Math.round(t * 3) % 10 === 0) {
+                        avatar.current.expressionManager.setValue('blink', 1 - Math.abs(Math.sin(t * 3 * Math.PI)))
+                    }
+                    if (bonesStore.upperChest) {
+                        bonesStore.upperChest.rotation.y = (Math.PI / 600) * Math.sin((t / 8) * Math.PI)
+                        bonesStore.spine.position.y = (Math.PI / 400) * Math.sin((t / 2) * Math.PI)
+                        bonesStore.spine.position.z = (Math.PI / 600) * Math.sin((t / 2) * Math.PI)
+                    }
+                    if(bonesStore.head){
+                        bonesStore.head.rotation.y = -remoteCameraDirection.x;
+                        bonesStore.head.rotation.x = remoteCameraDirection.y;
+                    }
 
-                if (Math.round(t * 3) % 10 === 0) {
-                    avatar.current.expressionManager.setValue('blink', 1 - Math.abs(Math.sin(t * 3 * Math.PI)))
                 }
-                if (bonesStore.upperChest) {
-                    bonesStore.upperChest.rotation.y = (Math.PI / 600) * Math.sin((t / 8) * Math.PI)
-                    bonesStore.spine.position.y = (Math.PI / 400) * Math.sin((t / 2) * Math.PI)
-                    bonesStore.spine.position.z = (Math.PI / 600) * Math.sin((t / 2) * Math.PI)
+
+                // Remote Hands
+                if(remoteHandLandMarksProp?.value !== false)
+                {
+                    //console.log('From Models', remoteHandLandMarksProp.value);
+
+                    if(remoteHandLandMarksProp.value?.length === 1)
+                    {
+                        CreateTwo3DRemoteHands(remoteHandLandMarksProp.value[0].keypoints3D, false, OOI, remoteHandLandMarksProp.value[0].keypoints[0].x, remoteHandLandMarksProp.value[0].keypoints[0].y,1, 1)
+                    }else if(remoteHandLandMarksProp.value?.length === 2){
+                        CreateTwo3DRemoteHands(remoteHandLandMarksProp.value[0].keypoints3D, remoteHandLandMarksProp.value[1].keypoints3D, OOI, remoteHandLandMarksProp.value[0].keypoints[0].x, remoteHandLandMarksProp.value[0].keypoints[0].y,remoteHandLandMarksProp.value[1].keypoints[0].x, remoteHandLandMarksProp.value[1].keypoints[0].y);
+                    }
+                }else{
+                    //console.log("no hand");
+                    CreateTwo3DRemoteHands(null,null,OOI,1,1,1, 1);
                 }
-                if(bonesStore.head){
-                    //bonesStore.head.rotation.y = (Math.PI / 600) * 5 *Math.sin((t / 8) * Math.PI);
-                    bonesStore.head.rotation.y = remoteCameraDirection.x;
-                    bonesStore.head.rotation.x = remoteCameraDirection.y;
-                }
-                // if(bonesStore.neck){
-                //
-                // }
+
             }
-
 
             // Local hands
             handLandMarks.estimateHands(localVideo).then((res)=>{
@@ -253,22 +253,6 @@ const ModelsVrm = ({userJoined,handLandmarksProp,remoteHandLandMarksProp,cameraD
                     CreatTwo3DHands(null,null,OOI,1,1,1, 1);
                 }
             });
-
-            // Remote Hands
-            if(remoteHandLandMarksProp?.value !== false)
-            {
-                //console.log('From Models', remoteHandLandMarksProp.value);
-
-                if(remoteHandLandMarksProp.value?.length === 1)
-                {
-                    CreateTwo3DRemoteHands(remoteHandLandMarksProp.value[0].keypoints3D, false, OOI, remoteHandLandMarksProp.value[0].keypoints[0].x, remoteHandLandMarksProp.value[0].keypoints[0].y,1, 1)
-                }else if(remoteHandLandMarksProp.value?.length === 2){
-                    CreateTwo3DRemoteHands(remoteHandLandMarksProp.value[0].keypoints3D, remoteHandLandMarksProp.value[1].keypoints3D, OOI, remoteHandLandMarksProp.value[0].keypoints[0].x, remoteHandLandMarksProp.value[0].keypoints[0].y,remoteHandLandMarksProp.value[1].keypoints[0].x, remoteHandLandMarksProp.value[1].keypoints[0].y);
-                }
-            }else{
-                //console.log("no hand");
-                CreateTwo3DRemoteHands(null,null,OOI,1,1,1, 1);
-            }
         }
     });
 
@@ -276,11 +260,11 @@ const ModelsVrm = ({userJoined,handLandmarksProp,remoteHandLandMarksProp,cameraD
     return(
         <>
             <primitive object={scene} scale={1} position={[0, 0, 0]} rotation={[0, 0, 0]} >
-                <Html
+                { userJoined && <Html
                     position={[-0.4, 1.3, 1]}
                 >
                     <div className="annotation">Peer User</div>
-                </Html>
+                </Html>}
             </primitive>
         </>
     )

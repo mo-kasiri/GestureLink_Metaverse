@@ -11,8 +11,8 @@ const CreateTwo3DRemoteHands = (handLandmarks1,handLandmarks2, OOI, horizontal1,
 
     const webcam2vector = (x, y, z, horizontal, vertical) => {
         return new THREE.Vector3(
-            -(x*1.5 + (horizontal/localVideo.videoWidth - 0.5)) - 0.2,
-            -(y*1.5 + (vertical/localVideo.videoHeight - 0.5)) + 1.3,
+            -(x*1.3 + (horizontal/localVideo.videoWidth - 0.5)) - 0.2,
+            -(y*1.3 + (vertical/localVideo.videoHeight - 0.5)) + 1.3,
             z - 0.3
         )
     }

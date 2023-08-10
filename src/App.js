@@ -177,6 +177,7 @@ function App() {
       peerVideoTag.current.play().then(()=>{
 
         console.log('Receiving Media successful');
+        setUserJoined2SocialVR(true);
         setCallAccepted(true);
 
       }).catch(e => console.log('play video error:', e));
@@ -254,6 +255,7 @@ function App() {
         peerVideoTag.current.play().then(()=>{
 
           console.log('Receiving Media successful');
+          setUserJoined2SocialVR(true);
 
         }).catch(e => console.log('play video error:', e));
       });
@@ -345,7 +347,7 @@ function App() {
               cameraDirection={handleCameraDirection}
               remoteCameraDirection={remoteCameraDirection}
           />
-          <Perf position='top-right' style={{top:80}}/>
+          {/*<Perf position='top-right' style={{top:80}}/>*/}
         </Canvas>}
 
         {isJoined &&
