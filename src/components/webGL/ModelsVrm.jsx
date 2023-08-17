@@ -39,7 +39,7 @@ const ModelsVrm = ({userJoined,handLandmarksProp,remoteHandLandMarksProp,cameraD
 
         if(userJoined){
             loader.load(
-                '/models/woman.temp.vrm',
+                '/models/woman.vrm',
                 //'/models/moManCompressed.vrm',
                 (gltf)=>{
                     setGltf(gltf);

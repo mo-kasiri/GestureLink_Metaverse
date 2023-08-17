@@ -15,7 +15,7 @@ let handLandmarker;
 
 const detectorConfig = {
     runtime: 'mediapipe', // or 'tfjs'
-    solutionPath: `https://cdn.jsdelivr.net/npm/@mediapipe/hands/`,
+    solutionPath: `https://cdn.jsdelivr.net/npm/@mediapipe/hands`,
     //solutionPath: 'node_modules/@mediapipe/hands/',
     modelType: 'full',
     maxHands: 2
