@@ -30,9 +30,9 @@ class AgoraConnection{
     }
 
 
-    async logout(){
-        return await client.logout();
-    }
+    // async logout(){
+    //     return await client.logout();
+    // }
 
 
     async createChannel(chn){
@@ -91,8 +91,15 @@ class AgoraConnection{
 
     }
 
-
-
-
+    async getMembers(){
+        if(channel){
+            try{
+                return await channel.getMembers();
+            }catch (e){
+                console.log('server connection error!',e);
+                return {message: 'can not connect to the agora server', type:'danger'}
+            }
+        }
+    }
 }
 export default new AgoraConnection();

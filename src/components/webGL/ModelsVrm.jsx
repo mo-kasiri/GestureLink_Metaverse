@@ -45,6 +45,7 @@ const ModelsVrm = ({userJoined,handLandmarksProp,remoteHandLandMarksProp,cameraD
                     setGltf(gltf);
                     console.log(gltf);
                     scene.add(gltf.scene);
+
                     gltf.scene.scale.set(1.2,1.2,1.2);
                     vrm = gltf.userData.vrm;
                     avatar.current = vrm;
@@ -76,6 +77,11 @@ const ModelsVrm = ({userJoined,handLandmarksProp,remoteHandLandMarksProp,cameraD
                     setBones(bones);
                 }
             )
+        }else if(!userJoined){
+            console.log(scene);
+            scene.traverse((n)=>{
+                if(n.name === "Scene") scene.remove(n);
+            })
         }
     }, [userJoined]);
 

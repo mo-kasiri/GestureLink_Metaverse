@@ -63,14 +63,14 @@ function App() {
 
   const peerVideoTag = useRef(null);
 
-  console.log('app called');
+  //console.log('app called');
 
 
   const cancelErrorMsg = ()=>{
     setError({...error, message: ''});
   }
 
-  //let client;
+
   // Login to the Agora server first
   const loginPressed = async (uid)=>{
 
@@ -91,7 +91,7 @@ function App() {
       setLocalInfo({...localInfo, ID: uid});
     }else{
       setIsLoading(false);
-      console.log(isLoading);
+      //console.log(isLoading);
       setError({
         message: {
           head: 'Login failed,',
@@ -107,20 +107,60 @@ function App() {
     await AgoraConnection.createChannel(chn);
     await AgoraConnection.joinChannel();
     channel = AgoraConnection.getChannel();
+
+    await AgoraConnection.getMembers().then((members)=>{
+      //console.log('this are members in the channel', members);
+      if(members.length > 1){
+        setLocalInfo({...localInfo, peerID: parseInt(members[1]), channel: chn});
+        setTimeout(()=>{
+          setError({
+            message: {
+              head: `Member ${members[1]} is in your channel,`,
+              content: 'you can call them'
+            }
+            , type:'warning'})
+        }, 5000);
+      }
+    });
+
+
     channel.on('MemberJoined',(memberId)=>{
-      console.log('A member Joined the channel,:',memberId);
+      setError({
+        message: {
+          head: `Member ${memberId} Joined,`,
+          content: 'a new member joined the channel you can call them'
+        }
+        , type:'warning'});
+      //console.log('A member Joined the channel,:',memberId);
       setLocalInfo({...localInfo, peerID: memberId, channel: chn});
+    });
+
+    channel.on('MemberLeft', (memberId)=>{
+      //console.log('A member Joined the channel,:',memberId);
+      AgoraConnection.getMembers().then((members)=>{
+        if(members.length > 1){
+          setLocalInfo({...localInfo, peerID: memberId, channel: chn});
+        }else{
+          setError({
+            message: {
+              head: `Member ${memberId} Left,`,
+              content: 'no one can hear you; ask a peer to join your channel'
+            }
+            , type:'warning'});
+          setLocalInfo({...localInfo, channel: chn});
+        }
+      })
     });
 
     setError({
       message: {
         head: `Joining to ${chn} channel successful,`,
-        content: 'now can enter your peer ID to connect'
+        content: 'Ask a peer to join your channel'
       }
       , type:'success'});
     setIsJoined(true);
     setIsLoading(false);
-    setLocalInfo({...localInfo, channel: chn});
+    //setLocalInfo({...localInfo, channel: chn});
 
 
     let client = AgoraConnection.getClient();
@@ -131,7 +171,7 @@ function App() {
       let originalMessage;
 
       if(message.text.length > 1000){
-        console.log('length:', message.text.length);
+        //console.log('length:', message.text.length);
         originalMessage = JSON.parse(message.text);
         if(originalMessage?.type === 'offer')
         {
@@ -171,8 +211,10 @@ function App() {
     });
 
 
+
+
     caller.on("stream", stream => {
-      console.log('peer stream on the caller side***********: ', stream);
+      //console.log('peer stream on the caller side***********: ', stream);
       peerVideoTag.current.srcObject = stream;
       peerVideoTag.current.play().then(()=>{
 
@@ -181,16 +223,44 @@ function App() {
         setCallAccepted(true);
 
       }).catch(e => console.log('play video error:', e));
-
     });
 
+    // caller.on('close', ()=>{
+    //   caller.destroy();
+    //   console.log('*************inside close connection closed');
+    // });
+
+    caller.on('error', (err)=>{
+      // console.log(err);
+      // console.log(typeof err);
+      // console.log(Object.keys(err));
+      // console.log(err.code);
+      //RTCError: User-Initiated Abort, reason=Close called
+      if(err.code ===  'ERR_DATA_CHANNEL'){
+        console.log('the exact error');
+        setError({
+          message: {
+            head: 'Peer user left the chat,',
+            content: 'no one can hear you; call a peer to join social VR'
+          }
+          , type:'warning'});
+        setUserJoined2SocialVR(false);
+        setTimeout(()=>{
+          window.location.reload();
+        },8000);
+        //setCallAccepted(false);
+      }
+    });
+
+
+
     caller.on('connect', ()=>{
-      console.log('the connect message has been sent2');
+        console.log('the connect message has been sent2');
         setInterval(()=>{
                                               //<======================================================= Sending Data Incoming call
-          if(localHandLandmarks[0] !== false){
+          if(localHandLandmarks[0] !== false && caller.writable){
             caller.send(JSON.stringify({cameraDir: localCameraDirection,value:localHandLandmarks}));
-          }else{
+          }else if(caller.writable){
             caller.send(JSON.stringify({cameraDir: localCameraDirection, value : false}));
           }
         },20);
@@ -198,8 +268,7 @@ function App() {
 
 
     caller.on('data',(data) => {
-
-      //console.log(JSON.parse(data));  // <**************************************************************************** Receiving Data incommingCall
+      //console.log(JSON.parse(data));  // <**************************************************************************** Receiving Data incomingCall
       if(JSON.parse(data).value !== false) {
         remoteHandLandmarks.value = JSON.parse(data).value;
         if(JSON.parse(data).cameraDir?.x){
@@ -213,7 +282,6 @@ function App() {
         }
       }
     });
-
 
     console.log('this is calleeSignal***********', calleeSignal);
 
@@ -230,7 +298,6 @@ function App() {
           caller.signal(originalMessage);
         }
       }
-
     })
   }
 
@@ -260,6 +327,30 @@ function App() {
         }).catch(e => console.log('play video error:', e));
       });
 
+      localPeer.on('error', (err)=>{
+        // console.log(err);
+        // console.log(typeof err);
+        // console.log(Object.keys(err));
+        // console.log(err.code);
+        //RTCError: User-Initiated Abort, reason=Close called
+        if(err.code ===  'ERR_DATA_CHANNEL'){
+          console.log('the exact error');
+          setError({
+            message: {
+              head: 'Peer user left the chat,',
+              content: 'no one can hear you; call a peer to join social VR'
+            }
+            , type:'warning'});
+          setUserJoined2SocialVR(false);
+          setCallAccepted(false);
+        }
+      });
+
+      // localPeer.on('close', ()=>{
+      //   localPeer.destroy();
+      //   console.log('*************inside close connection closed');
+      // })
+
       localPeer.on('data',data => {
 
           //console.log(JSON.parse(data)); // <**************************************************************************** Receiving Data incomingCall
@@ -283,9 +374,9 @@ function App() {
 
           setInterval(()=> {
                                                   //<======================================================= Sending Data Incomming call
-            if(localHandLandmarks[0] !== false){
+            if(localHandLandmarks[0] !== false && localPeer.writable){
               localPeer.send(JSON.stringify({cameraDir: localCameraDirection,value: localHandLandmarks}));
-            }else{
+            }else if(localPeer.writable){
               localPeer.send(JSON.stringify({cameraDir: localCameraDirection, value : false}));
             }
           },20);
@@ -351,9 +442,8 @@ function App() {
         </Canvas>}
 
         {isJoined &&
-          <button type='button' className={showInstructions ? 'show btn btn-outline-secondary' : 'hide btn btn-outline-secondary'} id="PointerLockBtn">Immersive Mode</button>
+          <button type='button' className={showInstructions ? 'show btn btn-outline-secondary' : 'hide btn btn-outline-secondary'} id="PointerLockBtn">Click to enable Immersive Mode</button>
         }
-
       </>
   )
 }

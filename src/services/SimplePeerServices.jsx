@@ -1,5 +1,6 @@
-import Peer from 'simple-peer/simplepeer.min.js';
+//import Peer from 'simple-peer/simplepeer.min.js';
 //import Peer from 'simple-peer'
+import Peer from 'simple-peer/simplepeer.min.js'
 import LocalStreamService from "./LocalStreamService.jsx";
 
 
